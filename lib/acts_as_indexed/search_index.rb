@@ -48,14 +48,10 @@ module ActsAsIndexed #:nodoc:
     end
 
     def update_record(record_new, record_old)
-      if !record_unchanged?(record_new, record_old)
-        remove_record(record_old)
-        add_record(record_new)
+      remove_record(record_old)
 
-      # Always try to remove the record if it is non-indexable, in case proc
-      # makes use of any methods or attributes exteral of the record.
-      elsif !allow_indexing?(record_new)
-        remove_record(record_old)
+      if allow_indexing?(record_new)
+        add_record(record_new)
       end
     end
 
@@ -96,16 +92,6 @@ module ActsAsIndexed #:nodoc:
     end
 
     private
-
-    # The record is unchanged for our purposes if all the fields are the same
-    # and the if_proc returns the same result for both.
-    def record_unchanged?(record_new, record_old)
-      # NOTE: Using the dirty state would be great here, but it doesn't keep track of
-      # in-place changes.
-
-      allow_indexing?(record_old) == allow_indexing?(record_new) &&
-        !@fields.map { |field| record_old.send(field) == record_new.send(field) }.include?(false)
-    end
 
     def allow_indexing?(record)
       @if_proc.call(record)
